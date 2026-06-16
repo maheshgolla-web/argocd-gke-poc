@@ -1,0 +1,51 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sample-app-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: sample-app
+    rules:
+
+    # Alert if pod count drops below 2
+    - alert: SampleAppPodDown
+      expr: count(kube_pod_status_phase{namespace="default",phase="Running",pod=~"sample-app.*"}) < 2
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Sample App pods are down"
+        description: "Less than 2 pods running for sample-app"
+
+    # Alert if pod is restarting
+    - alert: SampleAppPodRestarting
+      expr: rate(kube_pod_container_status_restarts_total{namespace="default",pod=~"sample-app.*"}[5m]) > 0
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Sample App pod restarting"
+        description: "Pod {{ $labels.pod }} is restarting"
+
+    # Alert if CPU > 80%
+    - alert: SampleAppHighCPU
+      expr: sum(rate(container_cpu_usage_seconds_total{namespace="default",pod=~"sample-app.*"}[5m])) by (pod) > 0.8
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Sample App high CPU"
+        description: "Pod {{ $labels.pod }} CPU above 80%"
+
+    # Alert if Memory > 200MB
+    - alert: SampleAppHighMemory
+      expr: sum(container_memory_usage_bytes{namespace="default",pod=~"sample-app.*"}) by (pod) > 200000000
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Sample App high memory"
+        description: "Pod {{ $labels.pod }} memory above 200MB"
