@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: sample-app
-        image: asia-south1-docker.pkg.dev/ccd-poc-project/sample-app/sample-app:e653f578adcc1e608d9851f2b497736d1e369c51
+        image: asia-south1-docker.pkg.dev/ccd-poc-project/sample-app/sample-app:88124118ee6d5f34188cd6f5efa4bf72b9caf8c6
         ports:
         - containerPort: 80
