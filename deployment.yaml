@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: sample-app
-        image: nginx:1.25
+        image: asia-south1-docker.pkg.dev/ccd-poc-project/sample-app/sample-app:6aa050057d534d5c7bc7c50453d917ff35e3b832
         ports:
         - containerPort: 80
