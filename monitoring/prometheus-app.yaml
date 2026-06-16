@@ -57,13 +57,41 @@ spec:
           service:
             type: NodePort
             nodePort: 30296
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              group_by: ['alertname', 'severity']
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 12h
+              receiver: 'pagerduty-alerts'
+              routes:
+              - match:
+                  severity: critical
+                receiver: 'pagerduty-critical'
+                repeat_interval: 1h
+              - match:
+                  severity: warning
+                receiver: 'pagerduty-warning'
+                repeat_interval: 3h
+            receivers:
+            - name: 'pagerduty-alerts'
+              pagerduty_configs:
+              - service_key: 'd6a6dd1aa07f4d05d04b09ace12e7aae'
+                send_resolved: true
+                description: '{{ .CommonLabels.alertname }}'
+                details:
+                  severity: '{{ .CommonLabels.severity }}'
+                  summary: '{{ .CommonAnnotations.summary }}'
+                  description: '{{ .CommonAnnotations.description }}'
+            - name: 'pagerduty-critical'
+              pagerduty_configs:
+              - service_key: 'd6a6dd1aa07f4d05d04b09ace12e7aae'
+                send_resolved: true
+                severity: critical
+                description: '🔴 CRITICAL: {{ .CommonLabels.alertname }}'
+                details:
+                  severity: '{{ .CommonLabels.severity }}'
+                  summary: '{{ .CommonAnnotations.summary }}'
+                  description: '{{
