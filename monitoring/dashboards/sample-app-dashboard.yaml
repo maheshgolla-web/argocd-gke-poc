@@ -23,10 +23,7 @@ data:
             "expr": "count(kube_pod_info{namespace='default',pod=~'sample-app.*'})",
             "legendFormat": "Total Pods"
           }],
-          "options": {
-            "colorMode": "background",
-            "graphMode": "none"
-          }
+          "options": {"colorMode": "background", "graphMode": "none"}
         },
         {
           "id": 2,
@@ -37,17 +34,7 @@ data:
             "expr": "count(kube_pod_status_phase{namespace='default',phase='Running',pod=~'sample-app.*'})",
             "legendFormat": "Running"
           }],
-          "options": {
-            "colorMode": "background",
-            "graphMode": "none",
-            "thresholds": {
-              "steps": [
-                {"color": "red", "value": 0},
-                {"color": "yellow", "value": 1},
-                {"color": "green", "value": 2}
-              ]
-            }
-          }
+          "options": {"colorMode": "background", "graphMode": "none"}
         },
         {
           "id": 3,
@@ -55,15 +42,16 @@ data:
           "type": "stat",
           "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
           "targets": [{
-            "expr": "count(kube_pod_status_phase{namespace='default',phase='Pending',pod=~'sample-app.*'}) or vector(0)",
+            "expr": "sum(kube_pod_status_phase{namespace='default',phase='Pending',pod=~'sample-app.*'}) or vector(0)",
             "legendFormat": "Pending"
           }],
           "options": {
             "colorMode": "background",
             "graphMode": "none",
             "thresholds": {
+              "mode": "absolute",
               "steps": [
-                {"color": "green", "value": 0},
+                {"color": "green", "value": null},
                 {"color": "red", "value": 1}
               ]
             }
@@ -75,15 +63,16 @@ data:
           "type": "stat",
           "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
           "targets": [{
-            "expr": "count(kube_pod_container_status_waiting_reason{namespace='default',reason='CrashLoopBackOff',pod=~'sample-app.*'}) or vector(0)",
+            "expr": "sum(kube_pod_container_status_waiting_reason{namespace='default',reason='CrashLoopBackOff',pod=~'sample-app.*'}) or vector(0)",
             "legendFormat": "CrashLoop"
           }],
           "options": {
             "colorMode": "background",
             "graphMode": "none",
             "thresholds": {
+              "mode": "absolute",
               "steps": [
-                {"color": "green", "value": 0},
+                {"color": "green", "value": null},
                 {"color": "red", "value": 1}
               ]
             }
@@ -102,10 +91,10 @@ data:
             "colorMode": "background",
             "graphMode": "none",
             "thresholds": {
+              "mode": "absolute",
               "steps": [
-                {"color": "red", "value": 0},
-                {"color": "yellow", "value": 1},
-                {"color": "green", "value": 2}
+                {"color": "red", "value": null},
+                {"color": "green", "value": 1}
               ]
             }
           }
@@ -119,10 +108,7 @@ data:
             "expr": "count(kube_node_info)",
             "legendFormat": "Total Nodes"
           }],
-          "options": {
-            "colorMode": "background",
-            "graphMode": "none"
-          }
+          "options": {"colorMode": "background", "graphMode": "none"}
         },
         {
           "id": 7,
@@ -130,20 +116,17 @@ data:
           "type": "timeseries",
           "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
           "targets": [{
-            "expr": "sum(rate(container_cpu_usage_seconds_total{namespace='default',pod=~'sample-app.*',container!=''}[5m])) by (pod) * 100",
+            "expr": "sum(rate(container_cpu_usage_seconds_total{namespace='default',pod=~'sample-app.*',container!='',container!='POD'}[5m])) by (pod) * 100",
             "legendFormat": "{{ pod }}"
-          }],
-          "options": {
-            "tooltip": {"mode": "multi"}
-          }
+          }]
         },
         {
           "id": 8,
-          "title": "Pod Memory Usage %",
+          "title": "Pod Memory Usage (MB)",
           "type": "timeseries",
           "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
           "targets": [{
-            "expr": "sum(container_memory_usage_bytes{namespace='default',pod=~'sample-app.*',container!=''}) by (pod) / 1024 / 1024",
+            "expr": "sum(container_memory_usage_bytes{namespace='default',pod=~'sample-app.*',container!='',container!='POD'}) by (pod) / 1024 / 1024",
             "legendFormat": "{{ pod }} (MB)"
           }]
         },
