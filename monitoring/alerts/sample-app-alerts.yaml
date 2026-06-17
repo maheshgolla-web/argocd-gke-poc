@@ -1,0 +1,102 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: sample-app-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus-stack
+spec:
+  groups:
+  - name: sample-app-pods
+    rules:
+
+    # Alert when pod count below 2
+    - alert: SampleAppPodCountLow
+      expr: count(kube_pod_status_phase{namespace="default",phase="Running",pod=~"sample-app.*"}) < 2
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Sample App pod count is low"
+        description: "Less than 2 pods running for sample-app. Current count: {{ $value }}"
+
+    # Alert when pod memory above 60%
+    - alert: SampleAppHighMemory
+      expr: |
+        (sum(container_memory_usage_bytes{namespace="default",pod=~"sample-app.*",container!=""}) by (pod)
+        /
+        sum(kube_pod_container_resource_limits{namespace="default",pod=~"sample-app.*",resource="memory",container!=""}) by (pod)) * 100 > 60
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Sample App pod memory above 60%"
+        description: "Pod {{ $labels.pod }} memory usage is {{ $value | printf \"%.1f\" }}%"
+
+    # Alert when pod CPU above 60%
+    - alert: SampleAppHighCPU
+      expr: |
+        (sum(rate(container_cpu_usage_seconds_total{namespace="default",pod=~"sample-app.*",container!=""}[5m])) by (pod)
+        /
+        sum(kube_pod_container_resource_limits{namespace="default",pod=~"sample-app.*",resource="cpu",container!=""}) by (pod)) * 100 > 60
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Sample App pod CPU above 60%"
+        description: "Pod {{ $labels.pod }} CPU usage is {{ $value | printf \"%.1f\" }}%"
+
+    # Alert when pod is Pending
+    - alert: SampleAppPodPending
+      expr: count(kube_pod_status_phase{namespace="default",phase="Pending",pod=~"sample-app.*"}) > 0
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Sample App pod is Pending"
+        description: "Pod {{ $labels.pod }} is in Pending state for more than 2 minutes"
+
+    # Alert when pod is in CrashLoopBackOff
+    - alert: SampleAppPodCrashLoop
+      expr: rate(kube_pod_container_status_restarts_total{namespace="default",pod=~"sample-app.*"}[5m]) * 60 * 5 > 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Sample App pod is in CrashLoop"
+        description: "Pod {{ $labels.pod }} is crash looping"
+
+  - name: nodes
+    rules:
+
+    # Alert when node count below 2
+    - alert: NodeCountLow
+      expr: count(kube_node_status_condition{condition="Ready",status="true"}) < 2
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Node count is below 2"
+        description: "Only {{ $value }} node(s) are ready. Expected at least 2"
+
+    # Alert when node memory above 60%
+    - alert: NodeHighMemory
+      expr: |
+        (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 60
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node memory above 60%"
+        description: "Node {{ $labels.instance }} memory usage is {{ $value | printf \"%.1f\" }}%"
+
+    # Alert when node CPU above 60%
+    - alert: NodeHighCPU
+      expr: |
+        100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 60
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Node CPU above 60%"
+        description: "Node {{ $labels.instance }} CPU usage is {{ $value | printf \"%.1f\" }}%"
